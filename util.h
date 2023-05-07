@@ -15,7 +15,7 @@ void  header();
 void  dismiss();
 void  add();
 void  remove_applicant();
-void  modidy_applicant();
+void  modify_applicant();
 void  list_applicants();
 void  list_applicants_by_days();
 void  exit_();

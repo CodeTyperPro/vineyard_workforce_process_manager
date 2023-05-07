@@ -12,17 +12,16 @@ void run() {
     char option;
 
     do {
-
         header();
 
-        printf("WELCOME TO VINEYARD WORKFORCE MANAGER ::::::\n");
+        printf("WELCOME TO VINEYARD WORKFORCE PROCESS MANAGER ::::::\n");
         printf("Options: \n");
-        printf("\t:: [A] => Add          - Insert/Create a new applicant\n");
-        printf("\t:: [D] => Delete       - Delete/Remove an applicant\n");
-        printf("\t:: [M] => Modify       - Modify/Edit an applicant\n");
-        printf("\t:: [L] => List         - Complete list of applicants\n");
-        printf("\t:: [B] => List by days - Show the list of applicants by days\n");
-        printf("\t:: [E] => Exit         - Exit the application\n");
+        printf("\t:: [A] => Add\n");
+        printf("\t:: [D] => Delete\n");
+        printf("\t:: [M] => Modify\n");
+        printf("\t:: [L] => List by days\n");
+        printf("\t:: [S] => Start buses\n");
+        printf("\t:: [E] => Exit");
 
         printf("\n\tEnter the operation: ");
         scanf("%c", &option);
@@ -36,14 +35,14 @@ void run() {
             case 'D':
                 remove_applicant();
                 break;
-            case 'L':
-                list_applicants();
+            case 'M':
+                modify_applicant();
                 break;
-            case 'B':
+            case 'L':
                 list_applicants_by_days();
                 break;
-            case 'M':
-                modidy_applicant();
+            case 'S':
+                start_buses();
                 break;
             case 'E':
                 dismiss();
@@ -61,7 +60,7 @@ header(){
     // if define on linux and mac
     time_t curtime;
     time(&curtime);
-    printf("\n\t\t\tVineyard WorkForce Manager\n");
+    printf("\n\t\t\tVineyard WorkForce Process Manager\n");
     printf("=======================================================================\n");
     printf("  MARTINS Alfredo | HEIOPO | ELTE - Budapest, %s\n", ctime(&curtime));
     printf("   :::::::   ::::::   :::::::   :::::::   :::::::   :::::::   :::::::\n");
@@ -170,7 +169,7 @@ remove_applicant(){
 
 /* === MODIFY APPLICANT === */
 void
-modidy_applicant() {
+modify_applicant() {
     printf("\n::::::: MODIFY APPLICANT :::::::\n");
     printf("Enter applicant's name: ");
     char str_name[MAX_LEN];
@@ -181,7 +180,6 @@ modidy_applicant() {
     }
 
     str_name[index] = '\0';
-
     
     printf("Enter new applicant's (maximum of %d digits or characters): ", MAX_LEN - 2);
     char str_new_name[MAX_LEN];
@@ -202,8 +200,6 @@ modidy_applicant() {
 
     str_days[index] = '\0';
 
-    // printf("%s \n\n", str_days_of_work);
-
     // Get the first token
     const char s[2] = " "; // Delimiter
     char * token; // Token to get each string
@@ -218,7 +214,6 @@ modidy_applicant() {
     bool abort = false;
     while (token != NULL) {
         cont++;
-        // printf("%s\n", token);
 
         if (!is_valid_day(token)) { // Checking whether or not all the days of the week are valid.
             printf("Error checking the text.\n");
@@ -258,22 +253,16 @@ is_valid_day(char * s) {
     } return false;
 }
 
-/* === LIST ALL APPLICANTS === */
-void  
-list_applicants(){
-    printf("\n::::::: LIST ALL APPLICANTS :::::::\n\n");
-    list();    
-}
-
 /* === LIST ALL APPLICANTS BY DAYS === */
 void
 list_applicants_by_days(){
     printf("\n::::::: LIST ALL APPLICANTS BY DAYS :::::::\n\n");
+
+    // list();
     
+    read_info_from_file();
     int len = sizeof(DAYS_OF_THE_WEEKS)/sizeof(DAYS_OF_THE_WEEKS[0]);
     for (int i = 0; i < len; ++i) {
-        printf("%s: \n", DAYS_OF_THE_WEEKS[i]);
-        list_by_day(DAYS_OF_THE_WEEKS[i]);
-        printf("\n");
+        print_day_available(i);
     }
 }
