@@ -149,6 +149,8 @@ start_buses() {
             exit(EXIT_SUCCESS);
         }            
     }
+
+    return 1;
 }
 
 void
@@ -248,6 +250,8 @@ read_info_from_file() {
     }
 
     fclose(file);
+
+    return 1;
 }
 
 void
