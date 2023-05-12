@@ -155,7 +155,7 @@ start_buses() {
 
 void
 handler(int signumber) {
-    printf("Signal from the minibuses: Buses have arrived.\n");
+    printf("Signal from the minibuses: Bus has arrived.\n");
 }
 
 bool
