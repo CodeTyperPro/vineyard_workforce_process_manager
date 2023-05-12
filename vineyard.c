@@ -40,44 +40,47 @@ start_buses() {
         add_to_bus(buses, all_workers.workers[CURRENT_DAY][i]);
     }
 
-    // ==== PROCESS BUSES ==== //
-    signal(SIGTERM, handler);
+    CURRENT_DAY = (CURRENT_DAY + 1) % len; // 0 1 2 3 4 | 0 1 2 3 4 | 0 1 2 3 4 | ...
 
-    int pipe_fd[2]; // Unnamed pipe file descriptor array
+    for (int x = 0; x < 2; ++x) {
+        // ==== PROCESS BUSES ==== //
+        signal(SIGTERM, handler);
 
-    if (pipe(pipe_fd) == - 1) {
-        printf("An error ocurred with opening the pipe.\n");
-        exit(EXIT_FAILURE);
-    }
+        int pipe_fd[2]; // Unnamed pipe file descriptor array
 
-    int messg, status;
-    key_t key;
-    key = ftok(PROGRAM_NAME, 1);
-    printf("Key: %d\n", key);
-    messg = msgget(key, 0600 | IPC_CREAT);
+        if (pipe(pipe_fd) == - 1) {
+            printf("An error ocurred with opening the pipe.\n");
+            exit(EXIT_FAILURE);
+        }
 
-    
-    msg_t mss;
+        int messg, status;
+        key_t key;
+        key = ftok(PROGRAM_NAME, 1);
+        printf("Key: %d\n", key);
+        messg = msgget(key, 0600 | IPC_CREAT);
 
-    if ( messg < 0) {
-        perror("msgget error!");
-        return 1;
-    }
+        msg_t mss;
 
-//    while (true) {
+        if ( messg < 0) {
+            perror("msgget error!");
+            return 1;
+        }
 
-        CURRENT_DAY = (CURRENT_DAY + 1) % len; // 0 1 2 3 4 | 0 1 2 3 4 | 0 1 2 3 4 | ...
+
+        struct sigaction action;
+        action.sa_handler = handler;
+        action.sa_flags = SA_RESTART;
+        sigaction(SIGUSR1, &action, NULL);
+
+        if (is_empty_bus(buses[x])) {
+            continue;
+        }
+
         pid_t child = fork();
         if (child < 0) {
             perror("Unsucessful fork call.\n"); exit(1);
         } 
         
-        struct sigaction action;
-        action.sa_handler = handler;
-        // sa.sa_mask = ;
-        action.sa_flags = SA_RESTART;
-        sigaction(SIGUSR1, &action, NULL);
-
         if (child > 0) {
             // Parent process
             printf("Parent starts and wait ...\n");
@@ -85,7 +88,7 @@ start_buses() {
             pause(); // Wait for SIGUSR1 from the child arrives.
 
             close(pipe_fd[0]);
-            write(pipe_fd[1], &buses, sizeof(buses));
+            write(pipe_fd[1], &buses[x], sizeof(buses[x]));
             close(pipe_fd[1]);
 
             wait(NULL);
@@ -99,7 +102,6 @@ start_buses() {
                 exit(1);
             } else {
                 printf("\nSummary message: \n");
-                // printf("\t%s of the requested workers have been brought in.\n", mss.msg_counter_workers);
                 printf("\tNumber of workers brought in => %s\n", mss.msg_counter_workers);
             }
 
@@ -110,15 +112,8 @@ start_buses() {
             }
 
             // === Receive message ends
-
             printf("\nParent ended.\n");
-
-            //sleep(10);
-            //wait(NULL)
         } else {
-            // Child process
-            // printf("Buses have arrived.\n");
-            
             sleep(2);
             kill(getppid(), SIGUSR1);
             sleep(2);
@@ -128,15 +123,10 @@ start_buses() {
             
             printf("\tChild read the message: \n");
             int count_workers = 0;
-            for (int j = 0; j < NUM_BUSES; j++) {
-                if (is_empty_bus(buses[j])) {
-                    printf("\t\tBus %d arrived empty.\n", (j + 1));
-                } else {
-                    printf("\t\tBus %d arrived with %d workers: \n", (j + 1), buses[j].num_workers);
-                    print_workers(buses[j]);
-                    count_workers += buses[j].num_workers;
-                }
-            }
+            
+            printf("\t\tBus %d arrived with %d workers: \n", (x + 1), buses[x].num_workers);
+            print_workers(buses[x]);
+            count_workers += buses[x].num_workers;
 
             close(pipe_fd[0]);
             sprintf(mss.msg_counter_workers, "%d", count_workers);
@@ -155,41 +145,14 @@ start_buses() {
             // === Send message ends === //
 
             sleep(2);
-
             printf("\tChild ended.\n");
-            // sleep(3);
-            // kill(getppid(), SIGTERM);
-            exit(0);
-        }
-//    }
-}
-/*
-int
-send(int msg_queue, msg_t * msg) {
-    return 0;
-}
-
-int
-receive(int msg_queue) {
-    msg_t msg;
-    int status;
-    status = msgrcv(msg_queue, &msg, MAX_TEXT, MSG_TYPE, 0);
-
-    if (status < 0) {
-        perror("msgrcv error!");
-        exit(1);
-    } else {
-        printf("Summary message: \n");
-        printf("\t%s of the requested workers have been brought in.\n", msg.msg_counter_workers);
-        printf("\tNumber of workers brougth in => %s\n", msg.msg_counter_workers);
+            exit(EXIT_SUCCESS);
+        }            
     }
-
-    return 0;
-}*/
+}
 
 void
 handler(int signumber) {
-    // printf("Signal with number %i has arrived\n", signumber);
     printf("Signal from the minibuses: Buses have arrived.\n");
 }
 
